@@ -2,13 +2,13 @@ extends:
   import: classic
   file: go/pipeline.yaml
 pipelines:
+  default:
+    options:
+      volumes:
+      - name: docker-daemon
+        hostPath:
+          path: /var/run/docker.sock
   pullRequest:
-    pipeline:
-      options:
-        volumes:
-        - name: docker-daemon
-          hostPath:
-            path: /var/run/docker.sock
     build:
       steps:
       - sh: docker build -f /workspace/source/Dockerfile --tag $DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION /workspace/source
@@ -30,12 +30,6 @@ pipelines:
           image: gcr.io/jenkinsxio-labs-private/jx-cli
 
   release:
-    pipeline:
-      options:
-        volumes:
-        - name: docker-daemon
-          hostPath:
-            path: /var/run/docker.sock
     build:
       steps:
       - sh: docker build -f /workspace/source/Dockerfile --tag $DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION /workspace/source

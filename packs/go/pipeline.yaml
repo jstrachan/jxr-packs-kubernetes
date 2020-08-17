@@ -3,14 +3,21 @@ extends:
   file: go/pipeline.yaml
 pipelines:
   pullRequest:
+    pipeline:
+      options:
+        volumes:
+        - name: docker-daemon
+          hostPath:
+            path: /var/run/docker.sock
     build:
       steps:
-      - sh: /kaniko/executor $KANIKO_FLAGS --cache=true --cache-dir=/workspace --context=/workspace/source --dockerfile=/workspace/source/Dockerfile --destination=$DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION --cache-repo=$DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/cache
-        name: container-build
-        image: gcr.io/kaniko-project/executor
-        env:
-        - name: NO_GOOGLE_APPLICATION_CREDENTIALS
-          value: "true"
+      - sh: docker build -f /workspace/source/Dockerfile --tag $DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION /workspace/source
+        image: docker:stable
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-daemon
     promote:
       steps:
       - dir: /home/jenkins/go/src/REPLACE_ME_GIT_PROVIDER/REPLACE_ME_ORG/REPLACE_ME_APP_NAME/charts/preview
@@ -23,14 +30,21 @@ pipelines:
           image: gcr.io/jenkinsxio-labs-private/jx-cli
 
   release:
+    pipeline:
+      options:
+        volumes:
+        - name: docker-daemon
+          hostPath:
+            path: /var/run/docker.sock
     build:
       steps:
-      - sh: /kaniko/executor $KANIKO_FLAGS --cache=true --cache-dir=/workspace --context=/workspace/source --dockerfile=/workspace/source/Dockerfile --destination=$DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION --cache-repo=$DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/cache
-        name: container-build
-        image: gcr.io/kaniko-project/executor
-        env:
-        - name: NO_GOOGLE_APPLICATION_CREDENTIALS
-          value: "true"
+      - sh: docker build -f /workspace/source/Dockerfile --tag $DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION /workspace/source
+        image: docker:stable
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-daemon
     promote:
       steps:
       - dir: /home/jenkins/go/src/REPLACE_ME_GIT_PROVIDER/REPLACE_ME_ORG/REPLACE_ME_APP_NAME/charts/REPLACE_ME_APP_NAME
